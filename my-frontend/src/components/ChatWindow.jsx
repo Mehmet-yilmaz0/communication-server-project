@@ -1,10 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { getMessages } from '../api/messagesApi';
+import DecryptPanel from './DecryptPanel';
 
 const ChatWindow = ({ refreshTrigger }) => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [decryptedMessages, setDecryptedMessages] = useState({}); // Track decrypted content per message
+  const [hoveredMessage, setHoveredMessage] = useState(null); // Track which message is hovered
   const messagesEndRef = useRef(null);
 
   // Auto-scroll to bottom when new messages arrive
@@ -36,6 +39,24 @@ const ChatWindow = ({ refreshTrigger }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Handle message decryption callback
+  const handleDecrypted = (messageId, decryptedData) => {
+    setDecryptedMessages((prev) => ({
+      ...prev,
+      [messageId]: decryptedData.content || decryptedData.text || 'Decrypted successfully',
+    }));
+    // Hide the panel after successful decryption
+    setHoveredMessage(null);
+  };
+
+  // Get display content for a message (encrypted or decrypted)
+  const getMessageContent = (message) => {
+    if (message.encrypted && decryptedMessages[message.id]) {
+      return decryptedMessages[message.id];
+    }
+    return message.content;
+  };
 
   // Format timestamp for display
   const formatTime = (timestamp) => {
@@ -124,34 +145,59 @@ const ChatWindow = ({ refreshTrigger }) => {
             <div
               key={message.id}
               className={`message-enter flex ${message.sender === 'Current User' ? 'justify-end' : 'justify-start'}`}
+              onMouseEnter={() => {
+                // Only show decrypt panel if message is encrypted and not already decrypted
+                if (message.encrypted && !decryptedMessages[message.id]) {
+                  setHoveredMessage(message.id);
+                }
+              }}
+              onMouseLeave={() => {
+                setHoveredMessage(null);
+              }}
             >
-              <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-md ${getMessageStyle(message)}`}>
-                {/* Message Header */}
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-medium opacity-75">
-                    {message.sender}
-                  </span>
-                  {message.encrypted && (
-                    <span className="text-xs opacity-75">🔒</span>
-                  )}
-                </div>
-
-                {/* Message Content */}
-                <p className="text-sm leading-relaxed break-words">
-                  {message.content}
-                </p>
-
-                {/* Message Footer */}
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs opacity-60">
-                    {formatTime(message.timestamp)}
-                  </span>
-                  {message.encryptionMethod && message.encryptionMethod !== 'none' && (
-                    <span className="text-xs opacity-60 bg-gray-600 px-2 py-1 rounded">
-                      {message.encryptionMethod.toUpperCase()}
+              {/* Message Container with Hover Effect */}
+              <div className={`relative max-w-xs lg:max-w-md group ${message.sender === 'Current User' ? 'ml-auto' : ''}`}>
+                <div className={`px-4 py-3 rounded-2xl shadow-md transition-all duration-200 ${getMessageStyle(message)} ${hoveredMessage === message.id ? 'opacity-70' : ''}`}>
+                  {/* Message Header */}
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-medium opacity-75">
+                      {message.sender}
                     </span>
-                  )}
+                    {message.encrypted && !decryptedMessages[message.id] && (
+                      <span className="text-xs opacity-75">🔒</span>
+                    )}
+                    {decryptedMessages[message.id] && (
+                      <span className="text-xs opacity-75">🔓</span>
+                    )}
+                  </div>
+
+                  {/* Message Content */}
+                  <p className="text-sm leading-relaxed break-words">
+                    {getMessageContent(message)}
+                  </p>
+
+                  {/* Message Footer */}
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs opacity-60">
+                      {formatTime(message.timestamp)}
+                    </span>
+                    {message.encryptionMethod && message.encryptionMethod !== 'none' && (
+                      <span className="text-xs opacity-60 bg-gray-600 px-2 py-1 rounded">
+                        {message.encryptionMethod.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                {/* Decrypt Panel - Shows on hover for encrypted messages */}
+                {hoveredMessage === message.id && message.encrypted && !decryptedMessages[message.id] && (
+                  <DecryptPanel
+                    messageId={message.id}
+                    encryptionMethod={message.encryptionMethod || 'aes'}
+                    onDecrypted={(decryptedData) => handleDecrypted(message.id, decryptedData)}
+                    onError={(errorMessage) => console.error('Decryption error:', errorMessage)}
+                  />
+                )}
               </div>
             </div>
           ))

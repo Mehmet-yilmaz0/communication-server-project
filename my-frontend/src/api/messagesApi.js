@@ -38,17 +38,26 @@ export const getMessages = async () => {
       },
       {
         id: 2,
-        content: "This is a sample message to demonstrate the UI",
+        content: "🔐 U2FsdGVkX1+KGT3H2ZqKhYE8wr5/VP8...",
         timestamp: new Date(Date.now() - 60000).toISOString(),
         sender: "User1",
-        encrypted: true
+        encrypted: true,
+        encryptionMethod: 'aes'
       },
       {
         id: 3,
-        content: "Encryption methods are available in the sidebar",
+        content: "This message demonstrates the encryption feature. Hover over encrypted messages to decrypt!",
         timestamp: new Date(Date.now() - 120000).toISOString(),
         sender: "User2",
         encrypted: false
+      },
+      {
+        id: 4,
+        content: "🔐 W0xHNUxPeFlNWmlEWDhFbjlYNk...",
+        timestamp: new Date(Date.now() - 180000).toISOString(),
+        sender: "User3",
+        encrypted: true,
+        encryptionMethod: 'rsa'
       }
     ];
   }
@@ -126,5 +135,62 @@ export const deleteMessage = async (messageId) => {
   } catch (error) {
     console.error('Error deleting message:', error);
     return false;
+  }
+};
+
+/**
+ * Decrypt an encrypted message
+ * @param {number|string} messageId - The ID of the message to decrypt
+ * @param {string} encryptionMethod - The encryption method used (e.g., 'AES-256')
+ * @param {string} password - The decryption password
+ * @returns {Promise<Object>} Decrypted message content
+ */
+export const decryptMessage = async (messageId, encryptionMethod, password) => {
+  try {
+    // TODO: Replace with actual decrypt endpoint
+    const response = await fetch(`${BASE_URL}/api/messages/decrypt`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add authentication headers if needed
+        // 'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        id: messageId,
+        method: encryptionMethod,
+        password: password,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || 'Failed to decrypt message. Invalid password.');
+    }
+
+    const decryptedData = await response.json();
+    return decryptedData;
+  } catch (error) {
+    // For demo purposes: Simulate password validation
+    // In production, this should actually throw the error
+    console.log('Demo mode: Simulating decryption...');
+    
+    // Simulate password validation
+    if (password === 'demo' || password === 'password' || password === '12345') {
+      // Return different decrypted content based on method
+      const decryptedContent = {
+        aes: 'This is a decrypted AES-256 message! The original content has been securely decrypted.',
+        rsa: 'RSA-2048 decryption successful! Your sensitive data is now visible.',
+        sha256: 'SHA-256 hash verified. Message integrity confirmed.',
+        base64: 'Base64 decoding complete. Message is now readable.',
+      };
+      
+      return {
+        content: decryptedContent[encryptionMethod] || 'Message successfully decrypted!',
+        decrypted: true,
+      };
+    } else {
+      // Re-throw with better error message
+      throw new Error('Invalid password. Please try again. (Hint: try "demo" or "password")');
+    }
   }
 };
