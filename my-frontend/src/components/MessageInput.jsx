@@ -17,10 +17,14 @@ const MessageInput = ({ selectedEncryptionMethod, onMessageSent }) => {
     
     try {
       // Prepare message data
+      // Note: receiver_id and key should ideally come from user input or context
+      // For now, using defaults - you may want to add UI for these
       const messageData = {
         content: message.trim(),
         encryptionMethod: selectedEncryptionMethod,
-        encrypted: selectedEncryptionMethod !== 'none'
+        encrypted: selectedEncryptionMethod !== 'none',
+        receiver_id: 1, // TODO: Get from user selection or context
+        key: 'KEY' // TODO: Get from user input or context
       };
 
       // Send message to API

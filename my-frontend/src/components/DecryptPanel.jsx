@@ -5,7 +5,7 @@ import { decryptMessage } from '../api/messagesApi';
  * DecryptPanel Component
  * Appears on hover over encrypted messages to allow password entry and decryption
  */
-const DecryptPanel = ({ messageId, encryptionMethod, onDecrypted, onError }) => {
+const DecryptPanel = ({ messageId, encryptionMethod, encryptedText, onDecrypted, onError }) => {
   const [password, setPassword] = useState('');
   const [isDecrypting, setIsDecrypting] = useState(false);
   const [error, setError] = useState(null);
@@ -22,7 +22,7 @@ const DecryptPanel = ({ messageId, encryptionMethod, onDecrypted, onError }) => 
 
     try {
       // Call the API to decrypt the message
-      const decryptedData = await decryptMessage(messageId, encryptionMethod, password);
+      const decryptedData = await decryptMessage(messageId, encryptionMethod, password, encryptedText);
       
       // Call the callback with the decrypted content
       if (onDecrypted) {

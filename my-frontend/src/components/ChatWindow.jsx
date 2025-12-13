@@ -193,7 +193,8 @@ const ChatWindow = ({ refreshTrigger }) => {
                 {hoveredMessage === message.id && message.encrypted && !decryptedMessages[message.id] && (
                   <DecryptPanel
                     messageId={message.id}
-                    encryptionMethod={message.encryptionMethod || 'aes'}
+                    encryptionMethod={message.encryptionMethod || 'vigenere'}
+                    encryptedText={message.content}
                     onDecrypted={(decryptedData) => handleDecrypted(message.id, decryptedData)}
                     onError={(errorMessage) => console.error('Decryption error:', errorMessage)}
                   />
