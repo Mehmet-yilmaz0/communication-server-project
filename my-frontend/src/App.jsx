@@ -1,49 +1,47 @@
-import React, { useState } from 'react';
-import Sidebar from './components/Sidebar';
-import ChatWindow from './components/ChatWindow';
-import MessageInput from './components/MessageInput';
-import PasswordStatus from './components/PasswordStatus';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { UserProvider } from './contexts/UserContext';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Chat from './pages/Chat';
+import ProtectedRoute from './components/ProtectedRoute';
 
+/**
+ * Main App Component with Routing
+ * 
+ * Routes:
+ * - /login - Login page (public)
+ * - /register - Register page (public)
+ * - /chat - Chat page (protected, requires authentication)
+ * - / - Redirects to /chat if authenticated, /login otherwise
+ */
 function App() {
-  // State for selected encryption method
-  const [selectedEncryptionMethod, setSelectedEncryptionMethod] = useState('none');
-  
-  // State for triggering chat refresh
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-
-  // Handle encryption method selection
-  const handleEncryptionMethodSelect = (method) => {
-    setSelectedEncryptionMethod(method);
-  };
-
-  // Handle new message sent (trigger refresh)
-  const handleMessageSent = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
-
   return (
-    <div className="h-screen w-screen bg-gray-900 flex overflow-hidden">
-      {/* Sidebar */}
-      <Sidebar 
-        selectedMethod={selectedEncryptionMethod}
-        onMethodSelect={handleEncryptionMethodSelect}
-      />
+    <UserProvider>
+      <Router>
+        <Routes>
+        {/* Public Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col relative">
-        {/* Password Status (floating) */}
-        <PasswordStatus />
-
-        {/* Chat Window */}
-        <ChatWindow refreshTrigger={refreshTrigger} />
-
-        {/* Message Input */}
-        <MessageInput 
-          selectedEncryptionMethod={selectedEncryptionMethod}
-          onMessageSent={handleMessageSent}
+        {/* Protected Routes */}
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
+          }
         />
-      </div>
-    </div>
+
+        {/* Default Route - Redirect based on auth status */}
+        <Route path="/" element={<Navigate to="/chat" replace />} />
+
+        {/* Catch all - redirect to chat */}
+        <Route path="*" element={<Navigate to="/chat" replace />} />
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
 

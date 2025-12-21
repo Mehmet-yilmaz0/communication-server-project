@@ -69,13 +69,16 @@ def send_message():
         receiver_id = data.get('receiver_id')
         text = data.get('text')
         method = data.get('method')
-        key = data.get('key')
+        key = data.get('key')  # Optional for some algorithms
         
         # Validate required fields
-        if not receiver_id or not text or not method or not key:
+        if not receiver_id or not text or not method:
             return jsonify({
-                'error': 'receiver_id, text, method, and key are required'
+                'error': 'receiver_id, text, and method are required'
             }), 400
+        
+        # Key validation will be handled by create_message function
+        # Some algorithms don't require key (pigpen, caesar with default, polybius with standard matrix)
         
         sender_id = request.current_user_id
         

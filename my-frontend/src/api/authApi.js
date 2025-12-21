@@ -70,3 +70,47 @@ export function removeToken() {
   localStorage.removeItem("access_token");
 }
 
+/**
+ * Check if token exists and is valid
+ * @returns {Promise<boolean>} True if token is valid, false otherwise
+ */
+export async function validateToken() {
+  const token = getToken();
+  if (!token) {
+    return false;
+  }
+
+  try {
+    // Try to verify token by making a request to a protected endpoint
+    const res = await fetch(`${API_URL}/messages`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    // If we get 401, token is invalid/expired
+    if (res.status === 401) {
+      removeToken();
+      return false;
+    }
+
+    // If we get 200 or other success status, token is valid
+    return res.ok;
+  } catch (error) {
+    // Network error or other issues - assume token is invalid
+    console.error("Token validation error:", error);
+    removeToken();
+    return false;
+  }
+}
+
+/**
+ * Logout user - clears token and redirects to login
+ */
+export function logout() {
+  removeToken();
+  // Note: Navigation will be handled by the component using this function
+}
+

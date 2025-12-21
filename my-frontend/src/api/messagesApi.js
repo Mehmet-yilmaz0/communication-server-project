@@ -42,9 +42,9 @@ export const getMessages = async () => {
  * Send a new message to the server
  * @param {Object} messageData - The message data to send
  * @param {string} messageData.content - Message content (plain text)
- * @param {string} messageData.encryptionMethod - Encryption method used (vigenere, caesar, etc.)
- * @param {number} messageData.receiver_id - Receiver user ID
- * @param {string} messageData.key - Encryption key
+ * @param {string} messageData.encryptionMethod - Encryption method ID (vigenere, caesar, etc.) - directly from backend
+ * @param {number} messageData.receiver_id - Receiver user ID (required, must be provided)
+ * @param {string} messageData.key - Encryption key (optional, only if algorithm requires it)
  * @returns {Promise<Object>} The created message object
  */
 export const postMessage = async (messageData) => {
@@ -53,23 +53,30 @@ export const postMessage = async (messageData) => {
     throw new Error("Authentication required");
   }
 
-  // Map frontend encryption method names to backend method names
-  const methodMap = {
-    'none': 'vigenere', // Default to vigenere if none
-    'aes': 'vigenere',
-    'rsa': 'caesar',
-    'sha256': 'shift',
-    'base64': 'vigenere',
-    'vigenere': 'vigenere',
-    'caesar': 'caesar',
-    'shift': 'shift',
+  // Validate required fields
+  if (!messageData.content || !messageData.content.trim()) {
+    throw new Error("Message content is required");
+  }
+
+  if (!messageData.encryptionMethod) {
+    throw new Error("Encryption method is required");
+  }
+
+  if (!messageData.receiver_id) {
+    throw new Error("Receiver is required. Please select a receiver.");
+  }
+
+  // Prepare request body
+  const requestBody = {
+    receiver_id: messageData.receiver_id, // Must be provided, no default
+    text: messageData.content.trim(),
+    method: messageData.encryptionMethod, // Direct algorithm ID, no mapping
   };
 
-  const method = methodMap[messageData.encryptionMethod] || 'vigenere';
-  const key = messageData.key || 'KEY'; // Default key if not provided
-
-  // If no receiver_id provided, default to 1 (or handle differently)
-  const receiver_id = messageData.receiver_id || 1;
+  // Only include key if provided (some algorithms don't require key)
+  if (messageData.key !== undefined && messageData.key !== null && messageData.key !== '') {
+    requestBody.key = messageData.key;
+  }
 
   const response = await fetch(`${API_URL}/messages`, {
     method: "POST",
@@ -77,12 +84,7 @@ export const postMessage = async (messageData) => {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({
-      receiver_id: receiver_id,
-      text: messageData.content,
-      method: method,
-      key: key,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {
@@ -124,36 +126,34 @@ export const deleteMessage = async (messageId) => {
 /**
  * Decrypt an encrypted message
  * @param {number|string} messageId - The ID of the message to decrypt (not used in API, kept for compatibility)
- * @param {string} encryptionMethod - The encryption method used (vigenere, caesar, shift)
+ * @param {string} encryptionMethod - The encryption method ID (vigenere, caesar, etc.) - directly from backend
  * @param {string} password - The decryption key
  * @param {string} encryptedText - The encrypted text to decrypt
  * @returns {Promise<Object>} Decrypted message content
  */
 export const decryptMessage = async (messageId, encryptionMethod, password, encryptedText) => {
-  // Map frontend encryption method names to backend method names
-  const methodMap = {
-    'none': 'vigenere',
-    'aes': 'vigenere',
-    'rsa': 'caesar',
-    'sha256': 'shift',
-    'base64': 'vigenere',
-    'vigenere': 'vigenere',
-    'caesar': 'caesar',
-    'shift': 'shift',
+  // Validate required fields
+  if (!encryptionMethod || !encryptedText) {
+    throw new Error("Encryption method and encrypted text are required");
+  }
+
+  // Prepare request body
+  const requestBody = {
+    text: encryptedText,
+    method: encryptionMethod, // Direct algorithm ID, no mapping
   };
 
-  const method = methodMap[encryptionMethod] || 'vigenere';
+  // Only include key if provided (some algorithms don't require key)
+  if (password !== undefined && password !== null && password !== '') {
+    requestBody.key = password;
+  }
 
   const response = await fetch(`${API_URL}/crypto/decrypt`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({
-      text: encryptedText,
-      method: method,
-      key: password,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {

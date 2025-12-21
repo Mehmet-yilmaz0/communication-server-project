@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMessages } from '../api/messagesApi';
+import { logout, getToken } from '../api/authApi';
+import { useUser } from '../contexts/UserContext';
 import DecryptPanel from './DecryptPanel';
 
 const ChatWindow = ({ refreshTrigger }) => {
@@ -9,6 +12,8 @@ const ChatWindow = ({ refreshTrigger }) => {
   const [decryptedMessages, setDecryptedMessages] = useState({}); // Track decrypted content per message
   const [hoveredMessage, setHoveredMessage] = useState(null); // Track which message is hovered
   const messagesEndRef = useRef(null);
+  const navigate = useNavigate();
+  const { user } = useUser(); // Get current logged-in user
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -62,6 +67,12 @@ const ChatWindow = ({ refreshTrigger }) => {
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Handle logout
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
   };
 
   // Get message bubble styling based on sender and encryption
@@ -121,9 +132,29 @@ const ChatWindow = ({ refreshTrigger }) => {
               {messages.length} message{messages.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-sm text-gray-400">Online</span>
+          <div className="flex items-center space-x-4">
+            {/* User Info */}
+            {user && (
+              <div className="flex items-center space-x-2 text-sm text-gray-300">
+                <span className="text-gray-400">Logged in as:</span>
+                <span className="font-medium">{user.username}</span>
+              </div>
+            )}
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span className="text-sm text-gray-400">Online</span>
+            </div>
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 shadow-md hover:shadow-lg"
+              title="Logout"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              <span>Logout</span>
+            </button>
           </div>
         </div>
       </div>

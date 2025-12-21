@@ -1,14 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-const Sidebar = ({ selectedMethod, onMethodSelect }) => {
-  // List of available encryption methods
-  const encryptionMethods = [
-    { id: 'none', name: 'No Encryption', icon: '🔓', description: 'Send messages without encryption' },
-    { id: 'aes', name: 'AES-256', icon: '🔐', description: 'Advanced Encryption Standard' },
-    { id: 'rsa', name: 'RSA-2048', icon: '🔑', description: 'Rivest-Shamir-Adleman' },
-    { id: 'sha256', name: 'SHA-256', icon: '🛡️', description: 'Secure Hash Algorithm' },
-    { id: 'base64', name: 'Base64', icon: '📝', description: 'Base64 encoding' },
-  ];
+/**
+ * Sidebar Component
+ * 
+ * Displays list of encryption methods from backend.
+ * Minimal UI - just algorithm names, no tooltips/details.
+ */
+const Sidebar = ({ methods, selectedMethod, onMethodSelect }) => {
+  if (!methods || methods.length === 0) {
+    return (
+      <div className="w-64 bg-gray-900 border-r border-gray-700 h-full flex flex-col">
+        <div className="p-4">
+          <p className="text-gray-400 text-sm">No encryption methods available</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-64 bg-gray-900 border-r border-gray-700 h-full flex flex-col">
@@ -18,39 +25,29 @@ const Sidebar = ({ selectedMethod, onMethodSelect }) => {
           🔒 Encryption Methods
         </h2>
         <p className="text-sm text-gray-400">
-          Choose your preferred encryption method
+          {methods.length} method{methods.length !== 1 ? 's' : ''} available
         </p>
       </div>
 
       {/* Encryption Methods List */}
       <div className="flex-1 overflow-y-auto p-2">
         <div className="space-y-1">
-          {encryptionMethods.map((method) => (
+          {methods.map((method) => (
             <button
               key={method.id}
               onClick={() => onMethodSelect(method.id)}
-              className={`w-full text-left p-3 rounded-lg transition-all duration-200 group ${
+              className={`w-full text-left p-3 rounded-lg transition-all duration-200 ${
                 selectedMethod === method.id
                   ? 'bg-blue-600 text-white shadow-md'
                   : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-gray-200'
               }`}
             >
-              <div className="flex items-center space-x-3">
-                <span className="text-lg">{method.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">
-                    {method.name}
-                  </div>
-                  <div className={`text-xs truncate ${
-                    selectedMethod === method.id 
-                      ? 'text-blue-100' 
-                      : 'text-gray-400 group-hover:text-gray-300'
-                  }`}>
-                    {method.description}
-                  </div>
-                </div>
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-sm truncate">
+                  {method.label}
+                </span>
                 {selectedMethod === method.id && (
-                  <div className="w-2 h-2 bg-blue-200 rounded-full"></div>
+                  <div className="w-2 h-2 bg-blue-200 rounded-full flex-shrink-0 ml-2"></div>
                 )}
               </div>
             </button>

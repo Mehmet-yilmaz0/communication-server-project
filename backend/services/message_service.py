@@ -10,7 +10,7 @@ from models.message import Message
 from services.crypto_service import encrypt_text, decrypt_text
 
 
-def create_message(sender_id: int, receiver_id: int, plaintext: str, method: str, key: str) -> Message:
+def create_message(sender_id: int, receiver_id: int, plaintext: str, method: str, key: str = None) -> Message:
     """
     Create and save an encrypted message to database
     

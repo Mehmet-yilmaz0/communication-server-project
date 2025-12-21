@@ -14,6 +14,7 @@ from database import db, init_db
 from routes.auth import auth_bp
 from routes.messages import messages_bp
 from routes.crypto import crypto_bp
+from routes.users import users_bp
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -28,6 +29,7 @@ CORS(app, origins=Config.CORS_ORIGINS, supports_credentials=True)
 app.register_blueprint(auth_bp)
 app.register_blueprint(messages_bp)
 app.register_blueprint(crypto_bp)
+app.register_blueprint(users_bp)
 
 # ==================== HEALTH CHECK ====================
 
